@@ -70,5 +70,6 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:29.0.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-database'
+    implementation 'com.google.firebase:firebase-messaging:20.1.0'
     compile 'com.android.support:multidex:1.0.1'
 }

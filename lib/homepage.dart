@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
 class HomePage extends StatefulWidget {
@@ -8,9 +9,41 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
+FlutterLocalNotificationsPlugin? notification;
+showNotification(String message) {
+    var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
+      'your channel id',
+      'your channel name',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics);
+    notification!.show(0, 'Alert',message, platformChannelSpecifics,
+        payload: 'item x');
+  }
 
 class _HomePageState extends State<HomePage> {
   final _databaseReference = FirebaseDatabase.instance.reference();
+
+
+  @override
+  void initState() {
+    var initializationSettingsAndroid =
+        const AndroidInitializationSettings('@mipmap/ic_launcher');
+    var initializationSettingsIOS = const IOSInitializationSettings();
+    var initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+    notification = FlutterLocalNotificationsPlugin();
+    notification!.initialize(initializationSettings,
+        onSelectNotification: (String? payload) async => {});
+    super.initState();
+    
+  }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -79,11 +112,10 @@ Widget _buildBody(
         const SizedBox(
           height: 20,
         ),
-        _buildContainer(
+        _buildMoistureIndicator(
           text: "Moisture",
           value: moisture,
           context: context,
-          color: Colors.orange,
         )
       ],
     ),
@@ -102,6 +134,7 @@ Widget _buildContainer({
     width: MediaQuery.of(context).size.width * 0.5,
     child: ListTile(
       title: CircularPercentIndicator(
+        addAutomaticKeepAlive: true,
         animation: true,
         animationDuration: 1500,
         animateFromLastPercent: true,
@@ -125,6 +158,7 @@ Widget _buildContainer({
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.black,
             ),
           ),
         ),
@@ -158,6 +192,36 @@ Widget _buildTemperatureIndicator({
       value: value,
       context: context,
       color: Colors.red,
+    );
+  }
+}
+
+Widget _buildMoistureIndicator({
+  required String text,
+  required dynamic value,
+  required BuildContext context,
+}) {
+  if (value < 60) {
+    showNotification("Dangerously low soil moisture, Moisture $value %");
+    return _buildContainer(
+      text: text,
+      value: value,
+      context: context,
+      color: Colors.red,
+    );
+  } else if (value >= 80 && value <= 100) {
+    return _buildContainer(
+      text: text,
+      value: value,
+      context: context,
+      color: Colors.green,
+    );
+  } else {
+    return _buildContainer(
+      text: text,
+      value: value,
+      context: context,
+      color: Colors.orange,
     );
   }
 }
