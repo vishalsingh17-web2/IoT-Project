@@ -9,25 +9,26 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
+
 FlutterLocalNotificationsPlugin? notification;
 showNotification(String message) {
-    var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
-      'your channel id',
-      'your channel name',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
-    var platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics);
-    notification!.show(0, 'Alert',message, platformChannelSpecifics,
-        payload: 'item x');
-  }
+  var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
+    'your channel id',
+    'your channel name',
+    importance: Importance.max,
+    priority: Priority.high,
+  );
+  var iOSPlatformChannelSpecifics = const IOSNotificationDetails();
+  var platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iOSPlatformChannelSpecifics);
+  notification!
+      .show(0, 'Alert', message, platformChannelSpecifics, payload: 'item x');
+}
 
 class _HomePageState extends State<HomePage> {
   final _databaseReference = FirebaseDatabase.instance.reference();
-
+  bool showButton = false;
 
   @override
   void initState() {
@@ -40,10 +41,7 @@ class _HomePageState extends State<HomePage> {
     notification!.initialize(initializationSettings,
         onSelectNotification: (String? payload) async => {});
     super.initState();
-    
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +61,26 @@ class _HomePageState extends State<HomePage> {
             builder: (context, AsyncSnapshot<Event> snapshot) {
               if (snapshot.hasData) {
                 var data = snapshot.data!.snapshot.value;
-                return _buildBody(
-                  temperature: data['Temperature'],
-                  humidity: data['Humidity'],
-                  moisture: data['Soil_Value'],
-                  context: context,
+                return Column(
+                  children: [
+                    _buildBody(
+                      temperature: data['Temperature'],
+                      humidity: data['Humidity'],
+                      moisture: data['Soil_Value'],
+                      context: context,
+                    ),
+                    const SizedBox(height: 20),
+                    data['Motor_Status'] == 1
+                        ? ElevatedButton(
+                            onPressed: () {
+                              _databaseReference.update({
+                                'Motor_Status': 0,
+                              });
+                            },
+                            child: const Text("Motor off"),
+                          )
+                        : Container()
+                  ],
                 );
               } else {
                 return const Center(
@@ -203,6 +216,31 @@ Widget _buildMoistureIndicator({
 }) {
   if (value < 60) {
     showNotification("Dangerously low soil moisture, Moisture $value %");
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      showDialog(
+          context: context,
+          builder: (_) {
+            return AlertDialog(
+              title: const Text("Dangerously low soil moisture"),
+              content: const Text("Do you want to switch on the motor"),
+              actions: [
+                TextButton(
+                  child: const Text("Yes"),
+                  onPressed: () {
+                    var x = FirebaseDatabase.instance.reference();
+                    x.update({'Motor_Status': 1});
+                    Navigator.pop(context);
+                  },
+                ),
+                TextButton(
+                  child: const Text("No"),
+                  onPressed: () => Navigator.pop(context),
+                )
+              ],
+            );
+          });
+    });
+
     return _buildContainer(
       text: text,
       value: value,
