@@ -21,10 +21,10 @@ int friendlyWetValue = 100;
 #define LED_2 D2
 
 // Setting params
-#define FIREBASE_HOST "iot-project-e30c5-default-rtdb.firebaseio.com"
-#define FIREBASE_AUTH "EtiyyI6b2mWhC9ZDMsIqfw8HtBIwnIm3OmqsE4Bx"
-#define WIFI_SSID "OnePlus 7"
-#define WIFI_PASSWORD "IoT_Test"
+#define FIREBASE_HOST " "
+#define FIREBASE_AUTH " "
+#define WIFI_SSID " "
+#define WIFI_PASSWORD " "
 
 void setup() {
   Serial.begin(9600);
